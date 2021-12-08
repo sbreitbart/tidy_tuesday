@@ -2,7 +2,7 @@
 
 # Read in with tidytuesdayR package 
 # Install from CRAN via:
-install.packages("tidytuesdayR")
+# install.packages("tidytuesdayR")
 library(tidytuesdayR)
 # This loads the readme and all the datasets for the week of interest
 
@@ -49,6 +49,7 @@ high_pressure <- matches %>%
 # Libraries
 library(ggplot2)
 library(dplyr)
+library(ggrepel)
 
 
 # bubble plot
@@ -57,7 +58,7 @@ ggplot(high_pressure,
            y = country,
            color = country)) +
   geom_point(alpha=0.7) +
-  geom_label_repel(data = subset(high_pressure, num_games > 4),
+  geom_label_repel(data = subset(high_pressure, num_games > 5),
                    aes(num_games, country, label = player_of_match),
                    size = 3) +
   theme(legend.position = "none") +
@@ -68,5 +69,52 @@ ggplot(high_pressure,
 
 
 
-# NEXT STEPS:
-# use ridgeline plot instead: https://www.r-graph-gallery.com/294-basic-ridgeline-plot.html
+# Use ridgeline plot
+
+library(ggridges)
+# library(ggplot2)
+
+ggplot(high_pressure,
+       aes(x = num_games, y = country, fill = country)) +
+  geom_density_ridges() +
+  theme_ridges() + 
+  theme(legend.position = "none") +
+  xlab("Number of Games Won") +
+  ylab("Player of Match's Country") +
+  xlim(0, 8)
+
+
+
+
+
+# try circle packing #
+
+# install/load packages
+devtools::install_github("jeromefroe/circlepackeR")
+install.packages("data.tree")
+install.packages("htmlwidgets")
+library(circlepackeR)
+library(data.tree)
+library(htmlwidgets)
+
+
+# Add a pathString column
+high_pressure %<>% dplyr::mutate(pathString = NA)
+high_pressure$pathString <- paste( "world",
+                                   high_pressure$country,
+                                   high_pressure$player_of_match, sep = '/')
+
+# Convert dataframe to a data.tree data structure
+high_pressure.nodes <- high_pressure
+nodes <- as.Node(high_pressure.nodes)
+
+  
+# create circlepacker graph
+circlepackeR(nodes,
+             size="num_games" , 
+             color_min = "hsl(60,80%,80%)",
+             color_max = "hsl(191,10%,40%)",
+             width=500,
+             height=500
+             )
+
